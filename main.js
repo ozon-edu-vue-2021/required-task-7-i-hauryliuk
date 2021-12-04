@@ -60,9 +60,11 @@ class People {
 
 class App {
   #people;
+  #elementsRefs = {};
 
   constructor() {
     this.#people = null;
+    this.#elementsRefs.contactList = document.querySelector('.contacts-list');
   }
 
   init(peopleData) {
@@ -76,6 +78,22 @@ class App {
 
   afterInit() {
     console.log(this);
+    this.displayPeople();
+  }
+
+  displayPeople() {
+    const contacts = document.createDocumentFragment();
+    let itemIndex = 0;
+    Object.keys(this.#people.getMembers()).forEach((memberId) => {
+      const nameElement = document.createElement('strong');
+      const contactElement = document.createElement('li');
+      contactElement.setAttribute('data-id', memberId);
+      contactElement.setAttribute('style', `--index: ${itemIndex++};`);
+      nameElement.textContent = this.#people.getMemberById(memberId).getName();
+      contactElement.append(nameElement);
+      contacts.append(contactElement);
+    });
+    this.#elementsRefs.contactList.append(contacts);
   }
 }
 
