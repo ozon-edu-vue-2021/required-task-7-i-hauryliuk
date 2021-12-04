@@ -58,10 +58,33 @@ class People {
   }
 }
 
+class App {
+  #people;
+
+  constructor() {
+    this.#people = null;
+  }
+
+  init(peopleData) {
+    this.#people = new People(peopleData);
+    if (Object.keys(this.#people.getMembers()).length === 0) {
+      alert('Nothing to display');
+    } else {
+      this.afterInit();
+    }
+  }
+
+  afterInit() {
+    console.log(this);
+  }
+}
+
+const app = new App();
+
 peopleApi
   .getPeople()
   .then((data) => {
-    console.log(data);
+    app.init(data);
   })
   .catch((error) => {
     console.log(error);
