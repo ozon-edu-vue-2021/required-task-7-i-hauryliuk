@@ -61,10 +61,22 @@ class People {
 class App {
   #people;
   #elementsRefs = {};
+  #handlers = {};
 
   constructor() {
     this.#people = null;
+    this.#elementsRefs.container = document.querySelector('#container');
     this.#elementsRefs.contactList = document.querySelector('.contacts-list');
+    this.#handlers.personClicked = (event) => {
+      if (this.#elementsRefs.selectedPerson !== event.currentTarget) {
+        this.#elementsRefs.selectedPerson = event.currentTarget;
+        this.setPersonDetails(
+          Number(this.#elementsRefs.selectedPerson.dataset.id)
+        );
+      }
+      this.#elementsRefs.selectedPerson.classList.add('active');
+      this.#elementsRefs.container.classList.add('details');
+    };
   }
 
   init(peopleData) {
@@ -89,11 +101,16 @@ class App {
       const contactElement = document.createElement('li');
       contactElement.setAttribute('data-id', memberId);
       contactElement.setAttribute('style', `--index: ${itemIndex++};`);
+      contactElement.addEventListener('click', this.#handlers.personClicked);
       nameElement.textContent = this.#people.getMemberById(memberId).getName();
       contactElement.append(nameElement);
       contacts.append(contactElement);
     });
     this.#elementsRefs.contactList.append(contacts);
+  }
+
+  setPersonDetails(personId) {
+    console.log('Setting person detail', personId);
   }
 }
 
