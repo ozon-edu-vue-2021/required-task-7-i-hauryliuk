@@ -29,10 +29,6 @@ class Person {
     this.#friends = personData.friends;
   }
 
-  getId() {
-    return this.#id;
-  }
-
   getName() {
     return this.#name;
   }
@@ -46,7 +42,19 @@ class People {
   #members = {};
 
   constructor(people) {
-    people.forEach((person) => (this.#members[person.id] = new Person(person)));
+    const membersInFriendsAllOccurrence = people.reduce((res, person) => {
+      res.push(...person.friends);
+      return res;
+    }, []);
+
+    people.forEach((person) => {
+      this.#members[person.id] = {};
+      this.#members[person.id].person = new Person(person);
+      this.#members[person.id].timesInFriends =
+        membersInFriendsAllOccurrence.filter(
+          (item) => item === person.id
+        ).length;
+    });
   }
 
   getMembers() {
@@ -54,11 +62,38 @@ class People {
   }
 
   getMemberById(id) {
-    return this.#members[id];
+    return this.#members[id].person;
+  }
+
+  getMemberFriendsById(id) {
+    return this.#members[id].person.getFriends();
+  }
+
+  getMemberNotFriendsById(id) {
+    return Object.keys(this.#members)
+      .map((memberId) => Number(memberId))
+      .filter(
+        (memberId) =>
+          memberId !== id &&
+          !this.#members[id].person.getFriends().includes(memberId)
+      );
+  }
+
+  getMembersIdByDescPopularity() {
+    return Object.keys(this.#members).sort((prev, next) =>
+      this.#members[prev].timesInFriends === this.#members[next].timesInFriends
+        ? this.#members[prev].person.getName().toLowerCase() <
+          this.#members[next].person.getName().toLowerCase()
+          ? -1
+          : 1
+        : this.#members[next].timesInFriends -
+          this.#members[prev].timesInFriends
+    );
   }
 }
 
 class App {
+  #OUTPUT_VALUES_COUNT = 3;
   #people;
   #elementsRefs = {};
   #handlers = {};
@@ -67,13 +102,18 @@ class App {
     this.#people = null;
     this.#elementsRefs.container = document.querySelector('#container');
     this.#elementsRefs.contactList = document.querySelector('.contacts-list');
+    this.#elementsRefs.friendsNames =
+      document.querySelectorAll('.friends-name');
+    this.#elementsRefs.notFriendsNames =
+      document.querySelectorAll('.not-friends-name');
+    this.#elementsRefs.topFromFriendsNames = document.querySelectorAll(
+      '.top-from-friends-name'
+    );
     this.#handlers.personClicked = (event) => {
-      if (this.#elementsRefs.selectedPerson !== event.currentTarget) {
-        this.#elementsRefs.selectedPerson = event.currentTarget;
-        this.setPersonDetails(
-          Number(this.#elementsRefs.selectedPerson.dataset.id)
-        );
-      }
+      this.#elementsRefs.selectedPerson = event.currentTarget;
+      this.setPersonDetails(
+        Number(this.#elementsRefs.selectedPerson.dataset.id)
+      );
       this.#elementsRefs.selectedPerson.classList.add('active');
       this.#elementsRefs.container.classList.add('details');
     };
@@ -81,6 +121,7 @@ class App {
 
   init(peopleData) {
     this.#people = new People(peopleData);
+
     if (Object.keys(this.#people.getMembers()).length === 0) {
       alert('Nothing to display');
     } else {
@@ -96,6 +137,7 @@ class App {
   displayPeople() {
     const contacts = document.createDocumentFragment();
     let itemIndex = 0;
+
     Object.keys(this.#people.getMembers()).forEach((memberId) => {
       const nameElement = document.createElement('strong');
       const contactElement = document.createElement('li');
@@ -110,7 +152,46 @@ class App {
   }
 
   setPersonDetails(personId) {
-    console.log('Setting person detail', personId);
+    const randomFriendsIds = this.getRandomValuesByQuantity(
+      this.#people.getMemberFriendsById(personId),
+      this.#OUTPUT_VALUES_COUNT
+    );
+    const randomNotFriendsIds = this.getRandomValuesByQuantity(
+      this.#people.getMemberNotFriendsById(personId),
+      this.#OUTPUT_VALUES_COUNT
+    );
+    const membersIdByDescPopularity =
+      this.#people.getMembersIdByDescPopularity();
+
+    for (let i = 0; i < this.#OUTPUT_VALUES_COUNT; i++) {
+      this.#elementsRefs.friendsNames[i].textContent = this.#people
+        .getMemberById(randomFriendsIds[i])
+        .getName();
+      this.#elementsRefs.notFriendsNames[i].textContent = this.#people
+        .getMemberById(randomNotFriendsIds[i])
+        .getName();
+      this.#elementsRefs.topFromFriendsNames[i].textContent = this.#people
+        .getMemberById(membersIdByDescPopularity[i])
+        .getName();
+    }
+  }
+
+  getRandomValuesByQuantity(list, quantity) {
+    function getRandomIntegerFromTo(min, max) {
+      let from = Math.ceil(min);
+      let to = Math.floor(max);
+      return Math.floor(Math.random() * (to - from) + from);
+    }
+
+    const result = [];
+    while (result.length < quantity) {
+      const randomValue = list[getRandomIntegerFromTo(0, list.length)];
+      if (!result.includes(randomValue)) {
+        result.push(randomValue);
+      }
+    }
+
+    return result;
   }
 }
 
