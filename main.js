@@ -115,6 +115,7 @@ class App {
   constructor() {
     this.#elementsRefs.container = document.querySelector('#container');
     this.#elementsRefs.contactList = document.querySelector('.contacts-list');
+    this.#elementsRefs.backBtn = document.querySelector('.back');
     this.#elementsRefs.friendsNames =
       document.querySelectorAll('.friends-name');
     this.#elementsRefs.notFriendsNames =
@@ -130,6 +131,16 @@ class App {
       this.#elementsRefs.selectedPerson.classList.add('active');
       this.#elementsRefs.container.classList.add('details');
     };
+    this.#handlers.backBtnClicked = () => {
+      this.#elementsRefs.selectedPerson.classList.remove('active');
+      this.#elementsRefs.selectedPerson = null;
+      this.#elementsRefs.container.classList.remove('details');
+    };
+
+    this.#elementsRefs.backBtn.addEventListener(
+      'click',
+      this.#handlers.backBtnClicked
+    );
   }
 
   getPeople() {
